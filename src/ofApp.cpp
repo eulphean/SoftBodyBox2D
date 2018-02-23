@@ -61,7 +61,7 @@ void ofApp::setupBox2dSprings() {
   // Construct circles at all the vertices from the mesh.
   for (auto v : vertices) {
     auto circle = std::make_shared<ofxBox2dCircle>();
-    circle -> setPhysics(2.0, 0.7, 0);
+    circle -> setPhysics(1.0, 0.2, 0);
     circle -> setup(box2d.getWorld(), v.x, v.y, 40);
     circles.push_back(circle);
   }
