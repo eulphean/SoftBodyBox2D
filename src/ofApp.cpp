@@ -10,36 +10,72 @@ void ofApp::setup(){
   
     // Setup Box2d
     box2d.init();
-    box2d.setGravity(0, 10);
+    box2d.setGravity(0, 0);
     box2d.createBounds(ofRectangle(0, 0, ofGetWidth(), ofGetHeight()));
     box2d.setFPS(60.0);
     box2d.registerGrabbing(); // Enable grabbing the circles.
   
     setupMeshPlane();
     setupBox2dSprings();
+  
+    // Commands
+    showMesh = true;
+    showSoftBody = false;
+    updateMesh = true;
 }
 
 //--------------------------------------------------------------
 void ofApp::update(){
   box2d.update();
+  if (updateMesh) {
+    updateMeshPlane();
+  }
 }
 
 //--------------------------------------------------------------
 void ofApp::draw(){
-  for(auto c: circles) {
-    ofNoFill();
-    ofSetColor(ofColor::red);
-    c->draw();
+  if (showSoftBody) {
+    for(auto c: circles) {
+      ofNoFill();
+      ofSetColor(ofColor::red);
+      c->draw();
+    }
+    
+    for(auto j: joints) {
+      ofSetColor(ofColor::green);
+      j->draw();
+    }
   }
   
-  for(auto j: joints) {
-    ofSetColor(ofColor::green);
-    j->draw();
+  if (showMesh) {
+    ofSetColor(ofColor::white);
+    mesh.drawWireframe();
+  }
+}
+
+void ofApp::keyPressed(int key) {
+  switch (key) {
+    case 'm': {
+      showMesh = !showMesh;
+      break;
+    }
+    
+    case 's': {
+      showSoftBody = !showSoftBody;
+      break;
+    }
+    
+    case 'u': {
+      updateMesh = !updateMesh;
+      break;
+    }
+    
+    default:
+      break;
   }
 }
 
 void ofApp::setupMeshPlane() {
-    int nPts = 10;
     mesh.setMode(OF_PRIMITIVE_TRIANGLE_FAN);
 
     // Center vertex for the triangle fan.
@@ -47,36 +83,69 @@ void ofApp::setupMeshPlane() {
     mesh.addVertex(center);
   
     // Add vertices around the center to form a circle.
-    for(int i = 0; i < nPts; i++){
-        float n = ofMap(i, 0, nPts - 1, 0.0, TWO_PI);
+    for(int i = 1; i < meshPoints; i++){
+        float n = ofMap(i, 1, meshPoints - 1, 0.0, TWO_PI);
         float x = sin(n);
         float y = cos(n);
-        mesh.addVertex({center.x + (x * radius), center.y + y * radius, 0});
+        mesh.addVertex({center.x + (x * meshRadius), center.y + y * meshRadius, 0});
     }
+}
+
+// Update the vertices in the mesh.
+void ofApp::updateMeshPlane() {
+  
+  // Update mesh vertices.
+  // 0th vertex is the center of the mesh.
+  // Vertices 1 -> circles.(size-1) are other vertices.
+  for (int i = 0; i < meshPoints; i++) {
+    // Get ith circle's position.
+    glm::vec2 pos;
+    
+    if (i == meshPoints - 1) {
+      pos = circles[1] -> getPosition();
+    } else {
+      pos = circles[i] -> getPosition();
+    }
+  
+    // Update ith mesh vertex's position.
+    auto vertex = mesh.getVertices()[i];
+    vertex.x = pos.x;
+    vertex.y = pos.y;
+    mesh.setVertex(i, vertex);
+  }
+  
+  // [Note] We need to update 1 more vertex which is at where
+  // vertex 1 is in the soft body circles or where vertex 1
+  // is in the mesh.
+//  glm::vec3 vertex = mesh.getVertices()[1];
+//  mesh.setVertex(meshPoints - 1, vertex);
 }
 
 void ofApp::setupBox2dSprings() {
   auto vertices = mesh.getVertices();
   
   // Construct circles at all the vertices from the mesh.
-  for (auto v : vertices) {
+  for (int i = 0; i < meshPoints - 1; i++) {
     auto circle = std::make_shared<ofxBox2dCircle>();
-    circle -> setPhysics(1.0, 0.2, 0);
-    circle -> setup(box2d.getWorld(), v.x, v.y, 40);
+    circle -> setPhysics(0.1, 0, 1);
+    circle -> setup(box2d.getWorld(), vertices[i].x, vertices[i].y, circleRadius);
     circles.push_back(circle);
   }
   
   // Connect center circle to all the circles.
-  // We start from the 1st circle because the 0th circle is actually
-  // the center circle to which all the other circles will get attached to.
+  // Start from 1st circle because the 0th circle is connected other vertices.
+  // We go 1 less than the mesh points because last point in the mesh is the
+  // same as the second point (after center).
   for(auto i=1; i<circles.size(); i++) {
     auto joint = std::make_shared<ofxBox2dJoint>();
     joint -> setup(box2d.getWorld(), circles[0] -> body, circles[i] -> body);
-    joint->setLength(radius);
+    joint->setLength(meshRadius);
     joints.push_back(joint);
   }
   
   // Connect joints with each other.
+  // We go 1 less than the mesh points because last point in the mesh is the
+  // same as the second point (after center).
   for(auto i=1; i<circles.size(); i++) {
     auto joint = std::make_shared<ofxBox2dJoint>();
     
@@ -87,7 +156,7 @@ void ofApp::setupBox2dSprings() {
     }
     
     joint -> setup(box2d.getWorld(), circles[fromIdx] -> body, circles[toIdx] -> body);
-    joint->setLength(30);
+    joint->setLength(0);
     joints.push_back(joint);
   }
 }

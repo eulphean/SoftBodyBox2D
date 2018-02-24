@@ -12,19 +12,26 @@ class ofApp : public ofBaseApp{
 		void setup();
 		void update();
 		void draw();
+    void keyPressed(int key);
   
     // Helpers
     void setupMeshPlane();
     void setupBox2dSprings();
+    void updateMeshPlane();
   
     // Constants
-    const int radius = 150;
+    const int meshRadius = 100;
+    const int meshPoints = 15;
+    const int circleRadius = 20;
   
     // Mesh and texture.
     ofImage texture;
     ofMesh mesh;
-    ofPath path;
   
+    // Commands. 
+    bool showMesh;
+    bool showSoftBody;
+    bool updateMesh;
   
     // Box2D
     ofxBox2d box2d;   // the box2d world
