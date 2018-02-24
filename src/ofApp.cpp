@@ -153,7 +153,7 @@ void ofApp::setupBox2dSprings() {
   // same as the second point (after center).
   for(auto i=1; i<circles.size(); i++) {
     auto joint = std::make_shared<ofxBox2dJoint>();
-    joint -> setup(box2d.getWorld(), circles[0] -> body, circles[i] -> body);
+    joint -> setup(box2d.getWorld(), circles[0] -> body, circles[i] -> body, 4.f, 1.f);
     joint->setLength(meshRadius);
     joints.push_back(joint);
   }
@@ -170,7 +170,7 @@ void ofApp::setupBox2dSprings() {
       toIdx = 1;
     }
     
-    joint -> setup(box2d.getWorld(), circles[fromIdx] -> body, circles[toIdx] -> body);
+    joint -> setup(box2d.getWorld(), circles[fromIdx] -> body, circles[toIdx] -> body, 4.f, 1.f);
     joint->setLength(jointLength);
     joints.push_back(joint);
   }
