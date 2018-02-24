@@ -21,17 +21,20 @@ class ofApp : public ofBaseApp{
   
     // Constants
     const int meshRadius = 100;
-    const int meshPoints = 15;
-    const int circleRadius = 20;
+    const int meshPoints = 20;
+    const int circleRadius = 18;
+    const int textureLength = 400;
+    const int jointLength = 5;
   
     // Mesh and texture.
-    ofImage texture;
+    ofImage image;
     ofMesh mesh;
   
     // Commands. 
     bool showMesh;
     bool showSoftBody;
     bool updateMesh;
+    bool showTexture;
   
     // Box2D
     ofxBox2d box2d;   // the box2d world

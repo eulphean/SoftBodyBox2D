@@ -15,21 +15,30 @@ void ofApp::setup(){
     box2d.setFPS(60.0);
     box2d.registerGrabbing(); // Enable grabbing the circles.
   
+    // This reduces the texture dimensions to (0, 0) to (1, 1).
+    // Very helpful here. 
+    //ofDisableArbTex();
+  
+    // Load image and resize.
+    ofLoadImage(image, "nebula.png");
+    image.resize(textureLength, textureLength);
+    image.getTexture().setTextureMinMagFilter(GL_NEAREST, GL_NEAREST);
+    image.getTexture().setTextureWrap(GL_REPEAT, GL_REPEAT);
+  
+    // Setup mesh and box2d springs and circles.
     setupMeshPlane();
     setupBox2dSprings();
   
     // Commands
     showMesh = true;
     showSoftBody = false;
-    updateMesh = true;
+    showTexture = false;
 }
 
 //--------------------------------------------------------------
 void ofApp::update(){
   box2d.update();
-  if (updateMesh) {
-    updateMeshPlane();
-  }
+  updateMeshPlane();
 }
 
 //--------------------------------------------------------------
@@ -49,7 +58,14 @@ void ofApp::draw(){
   
   if (showMesh) {
     ofSetColor(ofColor::white);
-    mesh.drawWireframe();
+    // Check if we need to bind the texture.
+    if (showTexture) {
+      image.getTexture().bind();
+      mesh.draw();
+      image.getTexture().unbind();
+    } else {
+      mesh.drawWireframe();
+    }
   }
 }
 
@@ -64,9 +80,9 @@ void ofApp::keyPressed(int key) {
       showSoftBody = !showSoftBody;
       break;
     }
-    
-    case 'u': {
-      updateMesh = !updateMesh;
+  
+    case 't': {
+      showTexture = !showTexture;
       break;
     }
     
@@ -81,20 +97,25 @@ void ofApp::setupMeshPlane() {
     // Center vertex for the triangle fan.
     glm::vec3 center = glm::vec3(ofGetWidth()/2, ofGetHeight()/2, 0);
     mesh.addVertex(center);
+    // Center vertex.
+    mesh.addTexCoord(glm::vec2(textureLength/2, textureLength/2));
+  
+    // Ratio between the texture and the circular mesh.
+    float sizeRatio = textureLength / (meshRadius * 2);
   
     // Add vertices around the center to form a circle.
     for(int i = 1; i < meshPoints; i++){
-        float n = ofMap(i, 1, meshPoints - 1, 0.0, TWO_PI);
-        float x = sin(n);
-        float y = cos(n);
-        mesh.addVertex({center.x + (x * meshRadius), center.y + y * meshRadius, 0});
+      float n = ofMap(i, 1, meshPoints - 1, 0.0, TWO_PI);
+      float x = sin(n);
+      float y = cos(n);
+      
+      mesh.addVertex({center.x + (x * meshRadius), center.y + y * meshRadius, 0});
+      mesh.addTexCoord(glm::vec2(textureLength/2 + x * meshRadius * sizeRatio, textureLength/2 + y * meshRadius * sizeRatio));
     }
 }
 
-// Update the vertices in the mesh.
 void ofApp::updateMeshPlane() {
-  
-  // Update mesh vertices.
+
   // 0th vertex is the center of the mesh.
   // Vertices 1 -> circles.(size-1) are other vertices.
   for (int i = 0; i < meshPoints; i++) {
@@ -113,12 +134,6 @@ void ofApp::updateMeshPlane() {
     vertex.y = pos.y;
     mesh.setVertex(i, vertex);
   }
-  
-  // [Note] We need to update 1 more vertex which is at where
-  // vertex 1 is in the soft body circles or where vertex 1
-  // is in the mesh.
-//  glm::vec3 vertex = mesh.getVertices()[1];
-//  mesh.setVertex(meshPoints - 1, vertex);
 }
 
 void ofApp::setupBox2dSprings() {
@@ -127,7 +142,7 @@ void ofApp::setupBox2dSprings() {
   // Construct circles at all the vertices from the mesh.
   for (int i = 0; i < meshPoints - 1; i++) {
     auto circle = std::make_shared<ofxBox2dCircle>();
-    circle -> setPhysics(0.1, 0, 1);
+    circle -> setPhysics(0.1, 0.1, 0.1);
     circle -> setup(box2d.getWorld(), vertices[i].x, vertices[i].y, circleRadius);
     circles.push_back(circle);
   }
@@ -156,7 +171,7 @@ void ofApp::setupBox2dSprings() {
     }
     
     joint -> setup(box2d.getWorld(), circles[fromIdx] -> body, circles[toIdx] -> body);
-    joint->setLength(0);
+    joint->setLength(jointLength);
     joints.push_back(joint);
   }
 }
