@@ -10,7 +10,7 @@ void ofApp::setup(){
   
     // Setup Box2d
     box2d.init();
-    box2d.setGravity(0, 0);
+    box2d.setGravity(0, 5);
     box2d.createBounds(ofRectangle(0, 0, ofGetWidth(), ofGetHeight()));
     box2d.setFPS(60.0);
     box2d.registerGrabbing(); // Enable grabbing the circles.
@@ -33,14 +33,24 @@ void ofApp::setup(){
     showMesh = true;
     showSoftBody = false;
     showTexture = false;
+  
+    // OSC handler
+    oscHandler.setup();
 }
 
 //--------------------------------------------------------------
 void ofApp::update(){
+  // Update OSC Handler.
+  oscHandler.update();
+  
+  // Box2D updates.
   box2d.update();
+  
+  // Update mesh plane.
   updateMeshPlane();
   
-  // Send OSC messages to 
+  // Track centroid with Wekinator. 
+  trackMeshCentroidForWekinator();
 }
 
 //--------------------------------------------------------------
@@ -114,6 +124,11 @@ void ofApp::setupMeshPlane() {
       mesh.addVertex({center.x + (x * meshRadius), center.y + y * meshRadius, 0});
       mesh.addTexCoord(glm::vec2(textureLength/2 + x * meshRadius * sizeRatio, textureLength/2 + y * meshRadius * sizeRatio));
     }
+}
+
+void ofApp::trackMeshCentroidForWekinator() {
+  glm::vec2 centroid = mesh.getCentroid();
+  oscHandler.sendPositionToWekinator(centroid);
 }
 
 void ofApp::updateMeshPlane() {

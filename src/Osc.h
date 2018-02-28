@@ -21,7 +21,7 @@ class Osc {
     void setupPitchSpace();
   
     // Wekinator commands.
-    void sendPositionToWekinator(int idx, glm::vec3 pos);
+    void sendPositionToWekinator(glm::vec2 pos);
   
     // Incoming commands.
     void processIncomingCommands(ofxOscMessage &m);
@@ -34,9 +34,12 @@ class Osc {
     // Wekinator OSC receiver.
     ofxOscReceiver receiver;
   
-    // Wekinator OSC sender. 
+    // Wekinator OSC sender.
     ofxOscSender sender;
   
     // Track previous notes so as to not send the same note again. 
     int previousMidiNote;
+  
+    // A pitch space. 
+    vector<int> pitchSpace;
 };
