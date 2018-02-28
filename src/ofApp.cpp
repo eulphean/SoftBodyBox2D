@@ -39,6 +39,8 @@ void ofApp::setup(){
 void ofApp::update(){
   box2d.update();
   updateMeshPlane();
+  
+  // Send OSC messages to 
 }
 
 //--------------------------------------------------------------
