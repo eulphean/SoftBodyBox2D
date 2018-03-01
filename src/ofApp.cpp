@@ -10,7 +10,7 @@ void ofApp::setup(){
   
     // Setup Box2d
     box2d.init();
-    box2d.setGravity(0, 5);
+    box2d.setGravity(0, 0);
     box2d.createBounds(ofRectangle(0, 0, ofGetWidth(), ofGetHeight()));
     box2d.setFPS(60.0);
     box2d.registerGrabbing(); // Enable grabbing the circles.
