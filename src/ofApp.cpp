@@ -60,7 +60,6 @@ void ofApp::update(){
       auto& instances = tracker.getInstances();
       auto& instance = instances[0];
       auto rect = instance.getBoundingBox();
-      std::cout << "Rect coordinates: " << rect.getX() << ", " << rect.getY() << ", " << rect.getArea() << endl;
       // Push it in the vector.
       boundingBoxes.push_back(rect);
     }
@@ -225,7 +224,7 @@ void ofApp::createFaceBox2DSprings() {
   // Construct circles at all the vertices from the mesh.
   for (int i = 0; i < meshPoints - 1; i++) {
     auto circle = std::make_shared<ofxBox2dCircle>();
-    circle -> setPhysics(0.3, 0.1, 0.1);
+    circle -> setPhysics(0.5, 0.5, 0.5);
     circle -> setup(box2d.getWorld(), vertices[i].x, vertices[i].y, circleRadius);
     circles.push_back(circle);
   }
@@ -279,6 +278,11 @@ void ofApp::keyPressed(int key) {
     
     case 's': {
       showSoftBody = !showSoftBody;
+      break;
+    }
+    
+    case 'r': {
+      createMeshAndSprings = !createMeshAndSprings;
       break;
     }
   
