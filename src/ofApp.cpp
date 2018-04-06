@@ -36,10 +36,21 @@ void ofApp::setup(){
   
     // OSC handler
     oscHandler.setup();
+  
+    // Face tracker
+    grabber.setup(640, 480);
+    tracker.setup();
 }
 
 //--------------------------------------------------------------
 void ofApp::update(){
+  // Update grabber and face tracker.
+  grabber.update();
+  
+  if (grabber.isFrameNew()) {
+    tracker.update(grabber);
+  }
+  
   // Update OSC Handler.
   oscHandler.update();
   
@@ -55,30 +66,49 @@ void ofApp::update(){
 
 //--------------------------------------------------------------
 void ofApp::draw(){
-  if (showSoftBody) {
-    for(auto c: circles) {
-      ofNoFill();
-      ofSetColor(ofColor::red);
-      c->draw();
-    }
-    
-    for(auto j: joints) {
-      ofSetColor(ofColor::green);
-      j->draw();
-    }
-  }
+  tracker.drawDebug();
+  tracker.drawDebugPose();
   
-  if (showMesh) {
-    ofSetColor(ofColor::white);
-    // Check if we need to bind the texture.
-    if (showTexture) {
-      image.getTexture().bind();
-      mesh.draw();
-      image.getTexture().unbind();
-    } else {
-      mesh.drawWireframe();
-    }
-  }
+  // Iteration 1
+  // Get the bounding box and map the texture coordinates of that bounding box
+  // on to the coordinates of the mesh as an independent texture.
+  // Bind the grabber texture.
+  // Coordinates from the bounding rectangles.
+  
+  // Iteration 2
+  // Get the polyline of the face's shape
+  // Create the mesh with that shape
+  // Create box2D model with that shape
+  // Then create those as control points
+  
+  // Control points add on recommended by Chris.
+  // Check it out for next iteration.
+  
+  grabber.draw(0, 0);
+//  if (showSoftBody) {
+//    for(auto c: circles) {
+//      ofNoFill();
+//      ofSetColor(ofColor::red);
+//      c->draw();
+//    }
+//
+//    for(auto j: joints) {
+//      ofSetColor(ofColor::green);
+//      j->draw();
+//    }
+//  }
+//
+//  if (showMesh) {
+//    ofSetColor(ofColor::white);
+//    // Check if we need to bind the texture.
+//    if (showTexture) {
+//      image.getTexture().bind();
+//      mesh.draw();
+//      image.getTexture().unbind();
+//    } else {
+//      mesh.drawWireframe();
+//    }
+//  }
 }
 
 void ofApp::keyPressed(int key) {

@@ -6,6 +6,7 @@
 #include "ofMain.h"
 #include "ofxBox2d.h"
 #include "Osc.h"
+#include "ofxFaceTracker2.h"
 
 class ofApp : public ofBaseApp{
 
@@ -45,4 +46,8 @@ class ofApp : public ofBaseApp{
   
     // OSC
     Osc oscHandler;
+  
+    // Facetracker
+    ofxFaceTracker2 tracker;
+    ofVideoGrabber grabber;
 };
