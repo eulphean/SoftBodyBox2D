@@ -56,6 +56,11 @@ class ofApp : public ofBaseApp{
     void showBoundingRect();
     void createFaceMesh();
     void createRectFaceMesh();
+    void updateFaceMeshPlane();
+    void createFaceBox2DSprings();
   
     bool showGrabber = false;
+    bool showDebugFace = false;
+    bool createMeshAndSprings = true;
+    int faceMeshRadius = -1;
 };
