@@ -50,4 +50,10 @@ class ofApp : public ofBaseApp{
     // Facetracker
     ofxFaceTracker2 tracker;
     ofVideoGrabber grabber;
+    std::vector<ofRectangle> boundingBoxes;
+    ofMesh faceMesh; 
+
+    void showBoundingRect();
+    void createFaceMesh();
+    void createRectFaceMesh();
 };

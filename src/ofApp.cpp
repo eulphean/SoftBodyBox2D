@@ -48,26 +48,60 @@ void ofApp::update(){
   grabber.update();
   
   if (grabber.isFrameNew()) {
+    // Clear the vector.
+    boundingBoxes.clear();
     tracker.update(grabber);
+
+    // Get the bounding boxes.
+    if (tracker.size() > 0){
+      auto& instances = tracker.getInstances();
+      auto& instance = instances[0];
+      auto rect = instance.getBoundingBox();
+      std::cout << "Rect coordinates: " << rect.getX() << ", " << rect.getY() << ", " << rect.getArea() << endl;
+      // Push it in the vector.
+      boundingBoxes.push_back(rect);
+    }
+    
+    // This creates a circular mesh with texture coordinates
+    // from the tracked bounding rectangles.
+    // Check if we have bounding boxes to create a face mesh.
+    if (boundingBoxes.size() > 0) {
+      //createFaceMesh();
+      createRectFaceMesh();
+    }
   }
   
   // Update OSC Handler.
-  oscHandler.update();
+  //oscHandler.update();
   
   // Box2D updates.
-  box2d.update();
+  //box2d.update();
   
   // Update mesh plane.
-  updateMeshPlane();
+  //updateMeshPlane();
   
   // Track centroid with Wekinator. 
-  trackMeshCentroidForWekinator();
+  //trackMeshCentroidForWekinator();
 }
 
 //--------------------------------------------------------------
 void ofApp::draw(){
-  tracker.drawDebug();
-  tracker.drawDebugPose();
+  // tracker.drawDebug();
+  //showBoundingRect();
+  
+  // Show just the mesh with
+  // grabber.draw(0, 0);
+  if (showMesh) {
+    ofSetColor(ofColor::white);
+    // Check if we need to bind the texture.
+    if (showTexture) {
+      grabber.getTexture().bind();
+      faceMesh.draw();
+      grabber.getTexture().unbind();
+    } else {
+      faceMesh.drawWireframe();
+    }
+  }
   
   // Iteration 1
   // Get the bounding box and map the texture coordinates of that bounding box
@@ -84,7 +118,7 @@ void ofApp::draw(){
   // Control points add on recommended by Chris.
   // Check it out for next iteration.
   
-  grabber.draw(0, 0);
+
 //  if (showSoftBody) {
 //    for(auto c: circles) {
 //      ofNoFill();
@@ -97,7 +131,7 @@ void ofApp::draw(){
 //      j->draw();
 //    }
 //  }
-//
+
 //  if (showMesh) {
 //    ofSetColor(ofColor::white);
 //    // Check if we need to bind the texture.
@@ -109,6 +143,137 @@ void ofApp::draw(){
 //      mesh.drawWireframe();
 //    }
 //  }
+}
+
+void ofApp::createRectFaceMesh() {
+  // Get the first bounding box, which is my face for now.
+  auto &r = boundingBoxes[0];
+
+  // Clear the mesh.
+  faceMesh.clear();
+  
+  faceMesh.setMode(OF_PRIMITIVE_TRIANGLES);
+  
+  int nCols = 5;
+  int nRows = 5;
+  float faceX = r.getX();
+  float faceY = r.getY();
+  float faceWidth = r.getWidth();
+  float xOffset = faceWidth/nRows;
+  float faceHeight = r.getHeight();
+  float yOffset = faceHeight/nCols;
+  float faceArea = r.getArea();
+  glm::vec3 faceCenter = r.getCenter();
+  
+//  int x, y;
+//  int xTex, yTex;
+//  // Setup a 5 x 5 mesh.
+//  for (y = 0, yTex = faceY; y < nCols, yTex <= faceHeight; y++, yTex += yOffset) {
+//    for (x = 0, xTex = faceX; x < nRows, xTex <= faceX; x++, xTex += xOffset) {
+//      float ix = faceWidth * x / (nCols - 1);
+//      float iy = faceHeight * y / (nRows - 1);
+//      faceMesh.addVertex({ix, iy, 0});
+//      //faceMesh.addTexCoord(glm::vec2(xTex, yTex));
+//    }
+//  }
+  
+  
+  int xTex; int yTex = faceY;
+  
+  // Setup a 5 x 5 mesh.
+  for (int y = faceY; y < faceHeight; y+=yOffset) {
+    xTex = faceX;
+    for (int x = faceX; x < faceWidth; x+=xOffset) {
+      float ix = faceWidth * x / (nCols - 1);
+      float iy = faceHeight * y / (nRows - 1);
+      faceMesh.addVertex({xTex, yTex, 0});
+      faceMesh.addTexCoord(glm::vec2(xTex, yTex));
+      xTex += xOffset;
+    }
+    yTex += yOffset;
+  }
+  
+  // We don't draw the last row / col (nRows - 1 and nCols - 1) because it was
+  // taken care of by the row above and column to the left.
+  for (int y = 0; y < nRows - 1; y++)
+  {
+      for (int x = 0; x < nCols - 1; x++)
+      {
+          // Draw T0
+          // P0
+          faceMesh.addIndex((y + 0) * nCols + (x + 0));
+          // P1
+          faceMesh.addIndex((y + 0) * nCols + (x + 1));
+          // P2
+          faceMesh.addIndex((y + 1) * nCols + (x + 0));
+
+          // Draw T1
+          // P1
+          faceMesh.addIndex((y + 0) * nCols + (x + 1));
+          // P3
+          faceMesh.addIndex((y + 1) * nCols + (x + 1));
+          // P2
+          faceMesh.addIndex((y + 1) * nCols + (x + 0));
+      }
+  }
+}
+void ofApp::createFaceMesh() {
+  // Get the first bounding box, which is my face for now.
+  auto &r = boundingBoxes[0];
+
+  // Clear the mesh.
+  faceMesh.clear();
+
+  // Store all the important face variables that I'll use
+  // to give the right coordinates for it on the mesh.
+  float faceX = r.getX();
+  float faceY = r.getY();
+  float faceWidth = r.getWidth();
+  float faceHeight = r.getHeight();
+  float faceArea = r.getArea();
+  glm::vec3 faceCenter = r.getCenter();
+
+  // Let's use faceWidth() as the reference to calculate
+  // faceMeshRadius. We could also use a formula to get the radius of
+  // the best fit circle in a rectangle.
+  int faceMeshRadius = faceWidth/2;
+
+  faceMesh.setMode(OF_PRIMITIVE_TRIANGLE_FAN);
+
+  // Center vertex for the triangle fan.
+  glm::vec3 center = glm::vec3(ofGetWidth()/2, ofGetHeight()/2, 0);
+  faceMesh.addVertex(center);
+
+  // Center vertex of the texture (ie. the center of the bounding rectangle for the texture)
+  faceMesh.addTexCoord(glm::vec2(faceWidth/2, faceHeight/2));
+
+  // Ratio between the texture and the circular mesh.
+  float sizeRatio = 1.5;
+
+  // Add vertices around the center to form a circle.
+  for(int i = 1; i < meshPoints; i++){
+    float n = ofMap(i, 1, meshPoints - 1, 0.0, TWO_PI);
+    float x = sin(n);
+    float y = cos(n);
+    
+    // Mesh vertex.
+    faceMesh.addVertex({center.x + (x * faceMeshRadius), center.y + y * faceMeshRadius, 0});
+    
+    // Mesh texture scaled coordinate.
+    faceMesh.addTexCoord(glm::vec2(faceWidth/2 + x * faceMeshRadius * sizeRatio,
+      faceHeight/2 + y * faceMeshRadius * sizeRatio));
+  }
+}
+
+void ofApp::showBoundingRect() {
+  // Draw the bounding boxes from the instances only.
+  for (auto& b : boundingBoxes) {
+    ofPushStyle();
+      ofFill();
+      ofSetColor(ofColor::red);
+      ofDrawRectangle(b.getX(), b.getY(), b.getWidth(), b.getHeight());
+    ofPopStyle();
+  }
 }
 
 void ofApp::keyPressed(int key) {
