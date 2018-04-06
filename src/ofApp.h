@@ -56,4 +56,6 @@ class ofApp : public ofBaseApp{
     void showBoundingRect();
     void createFaceMesh();
     void createRectFaceMesh();
+  
+    bool showGrabber = false;
 };

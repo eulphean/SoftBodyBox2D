@@ -38,7 +38,7 @@ void ofApp::setup(){
     oscHandler.setup();
   
     // Face tracker
-    grabber.setup(640, 480);
+    grabber.setup(ofGetWidth(), ofGetHeight());
     tracker.setup();
 }
 
@@ -66,8 +66,8 @@ void ofApp::update(){
     // from the tracked bounding rectangles.
     // Check if we have bounding boxes to create a face mesh.
     if (boundingBoxes.size() > 0) {
-      //createFaceMesh();
-      createRectFaceMesh();
+      createFaceMesh();
+      //createRectFaceMesh();
     }
   }
   
@@ -87,27 +87,32 @@ void ofApp::update(){
 //--------------------------------------------------------------
 void ofApp::draw(){
   // tracker.drawDebug();
-  //showBoundingRect();
+  // showBoundingRect();
   
   // Show just the mesh with
-  // grabber.draw(0, 0);
   if (showMesh) {
-    ofSetColor(ofColor::white);
-    // Check if we need to bind the texture.
-    if (showTexture) {
-      grabber.getTexture().bind();
-      faceMesh.draw();
-      grabber.getTexture().unbind();
-    } else {
-      faceMesh.drawWireframe();
+    if (boundingBoxes.size() > 0) {
+        auto&rect = boundingBoxes[0];
+        ofPushMatrix();
+          ofSetColor(ofColor::white);
+          ofPushMatrix();
+            //ofTranslate(ofGetWidth()/2 - rect.getWidth()/2, ofGetHeight()/2 - rect.getHeight()/2);
+            grabber.getTexture().bind();
+              if (showTexture) {
+                faceMesh.draw();
+              } else {
+                faceMesh.drawWireframe();
+              }
+            grabber.getTexture().unbind();
+          ofPopMatrix();
+        ofPopMatrix();
     }
   }
   
-  // Iteration 1
-  // Get the bounding box and map the texture coordinates of that bounding box
-  // on to the coordinates of the mesh as an independent texture.
-  // Bind the grabber texture.
-  // Coordinates from the bounding rectangles.
+  // Grabber.
+  if (showGrabber) {
+    grabber.draw(0, 0);
+  }
   
   // Iteration 2
   // Get the polyline of the face's shape
@@ -164,33 +169,17 @@ void ofApp::createRectFaceMesh() {
   float yOffset = faceHeight/nCols;
   float faceArea = r.getArea();
   glm::vec3 faceCenter = r.getCenter();
-  
-//  int x, y;
-//  int xTex, yTex;
-//  // Setup a 5 x 5 mesh.
-//  for (y = 0, yTex = faceY; y < nCols, yTex <= faceHeight; y++, yTex += yOffset) {
-//    for (x = 0, xTex = faceX; x < nRows, xTex <= faceX; x++, xTex += xOffset) {
-//      float ix = faceWidth * x / (nCols - 1);
-//      float iy = faceHeight * y / (nRows - 1);
-//      faceMesh.addVertex({ix, iy, 0});
-//      //faceMesh.addTexCoord(glm::vec2(xTex, yTex));
-//    }
-//  }
-  
-  
-  int xTex; int yTex = faceY;
-  
+
   // Setup a 5 x 5 mesh.
-  for (int y = faceY; y < faceHeight; y+=yOffset) {
-    xTex = faceX;
-    for (int x = faceX; x < faceWidth; x+=xOffset) {
+  for (int y = 0; y < nCols; y++) {
+    for (int x = 0; x < nRows; x++) {
       float ix = faceWidth * x / (nCols - 1);
       float iy = faceHeight * y / (nRows - 1);
-      faceMesh.addVertex({xTex, yTex, 0});
-      faceMesh.addTexCoord(glm::vec2(xTex, yTex));
-      xTex += xOffset;
+      faceMesh.addVertex({ix, iy, 0});
+      // Texture coordinates will be of the texture bounded by
+      // rectangle.. Offset the texCoordinate by faceX and faceY.
+      faceMesh.addTexCoord(glm::vec2(ix + faceX, iy + faceY));
     }
-    yTex += yOffset;
   }
   
   // We don't draw the last row / col (nRows - 1 and nCols - 1) because it was
@@ -233,10 +222,8 @@ void ofApp::createFaceMesh() {
   float faceArea = r.getArea();
   glm::vec3 faceCenter = r.getCenter();
 
-  // Let's use faceWidth() as the reference to calculate
-  // faceMeshRadius. We could also use a formula to get the radius of
-  // the best fit circle in a rectangle.
-  int faceMeshRadius = faceWidth/2;
+  // Calculate faceMeshRadius from faceArea.
+  int faceMeshRadius = sqrt(faceArea/PI);
 
   faceMesh.setMode(OF_PRIMITIVE_TRIANGLE_FAN);
 
@@ -245,10 +232,10 @@ void ofApp::createFaceMesh() {
   faceMesh.addVertex(center);
 
   // Center vertex of the texture (ie. the center of the bounding rectangle for the texture)
-  faceMesh.addTexCoord(glm::vec2(faceWidth/2, faceHeight/2));
+  faceMesh.addTexCoord(glm::vec2(faceCenter.x, faceCenter.y));
 
   // Ratio between the texture and the circular mesh.
-  float sizeRatio = 1.5;
+  float sizeRatio = faceArea/(PI * faceMeshRadius * faceMeshRadius);
 
   // Add vertices around the center to form a circle.
   for(int i = 1; i < meshPoints; i++){
@@ -260,8 +247,7 @@ void ofApp::createFaceMesh() {
     faceMesh.addVertex({center.x + (x * faceMeshRadius), center.y + y * faceMeshRadius, 0});
     
     // Mesh texture scaled coordinate.
-    faceMesh.addTexCoord(glm::vec2(faceWidth/2 + x * faceMeshRadius * sizeRatio,
-      faceHeight/2 + y * faceMeshRadius * sizeRatio));
+    faceMesh.addTexCoord(glm::vec2(faceX + faceWidth/2 + x * faceMeshRadius * sizeRatio, faceY + faceWidth/2 + y * faceMeshRadius * sizeRatio));
   }
 }
 
@@ -290,6 +276,11 @@ void ofApp::keyPressed(int key) {
   
     case 't': {
       showTexture = !showTexture;
+      break;
+    }
+    
+    case 'g': {
+      showGrabber = !showGrabber;
       break;
     }
     
