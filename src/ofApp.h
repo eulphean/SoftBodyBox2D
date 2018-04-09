@@ -7,6 +7,7 @@
 #include "ofxBox2d.h"
 #include "Osc.h"
 #include "ofxFaceTracker2.h"
+#include "Face.h"
 
 class ofApp : public ofBaseApp{
 
@@ -51,6 +52,7 @@ class ofApp : public ofBaseApp{
     ofxFaceTracker2 tracker;
     ofVideoGrabber grabber;
     std::vector<ofRectangle> boundingBoxes;
+    std::vector<ofMesh> faceMeshes;
     ofMesh faceMesh; 
 
     void showBoundingRect();
@@ -63,4 +65,7 @@ class ofApp : public ofBaseApp{
     bool showDebugFace = false;
     bool createMeshAndSprings = true;
     int faceMeshRadius = -1;
+  
+    // Face properties
+    std::vector<Face> faces; 
 };

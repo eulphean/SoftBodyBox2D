@@ -15,20 +15,6 @@ void ofApp::setup(){
     box2d.setFPS(60.0);
     box2d.registerGrabbing(); // Enable grabbing the circles.
   
-    // This reduces the texture dimensions to (0, 0) to (1, 1).
-    // Very helpful here. 
-    //ofDisableArbTex();
-  
-    // Load image and resize.
-    ofLoadImage(image, "nebula.png");
-    image.resize(textureLength, textureLength);
-    image.getTexture().setTextureMinMagFilter(GL_NEAREST, GL_NEAREST);
-    image.getTexture().setTextureWrap(GL_REPEAT, GL_REPEAT);
-  
-    // Setup mesh and box2d springs and circles.
-    //setupMeshPlane();
-    //setupBox2dSprings();
-  
     // Commands
     showMesh = true;
     showSoftBody = false;
@@ -64,17 +50,28 @@ void ofApp::update(){
       boundingBoxes.push_back(rect);
     }
     
-    // This creates a circular mesh with texture coordinates
-    // from the tracked bounding rectangles.
-    // Check if we have bounding boxes to create a face mesh.
+    // Go through all the bounding boxes currently active and
+    // create a new face. Turn off the flag to enable this creation
+    // for now. We can enable that flag for the system to recreate
+    // these faces by emptying the current set of faces.
     if (boundingBoxes.size() > 0) {
       if (createMeshAndSprings) {
-          createFaceMesh();
-          createFaceBox2DSprings();
-          createMeshAndSprings = false;
+        // Clear existing faces.
+        faces.clear();
+        for (auto &r : boundingBoxes) {
+          Face face;
+          face.createFaceMesh(r);
+          face.createFaceBox2DSprings();
+          faces.push_back(face);
+        }
+        createMeshAndSprings = false;
       }
-      
-      updateFaceMeshPlane();
+    }
+    
+    // Go through each face and update it based on its movement in the
+    // environment.
+    for (auto &face : faces) {
+      face.updateFaceMeshPlane();
     }
   }
   
@@ -137,19 +134,11 @@ void ofApp::draw(){
       j->draw();
     }
   }
-  
-  // Iteration 2
-  // Get the polyline of the face's shape
-  // Create the mesh with that shape
-  // Create box2D model with that shape
-  // Then create those as control points
-  
-  // Control points add on recommended by Chris.
-  // Check it out for next iteration.
 }
 
 void ofApp::createFaceMesh() {
   // Get the first bounding box, which is my face for now.
+  // faceMeshes.clear();
   auto &r = boundingBoxes[0];
 
   // Clear the mesh.
