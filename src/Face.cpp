@@ -17,7 +17,7 @@ void Face::createFaceMesh(ofRectangle r) {
   glm::vec3 faceCenter = r.getCenter();
 
   // Calculate faceMeshRadius from faceArea.
-  float faceMeshRadius = sqrt(faceArea/PI);
+  faceMeshRadius = sqrt(faceArea/PI);
 
   faceMesh.setMode(OF_PRIMITIVE_TRIANGLE_FAN);
 
@@ -45,26 +45,103 @@ void Face::createFaceMesh(ofRectangle r) {
   }
 }
 
-void Face::createFaceBox2DSprings() {
-
+void Face::createFaceBox2DSprings(ofxBox2d &box2d) {
+  auto vertices = faceMesh.getVertices();
+  
+  // Clear them to make them again.
+  circles.clear();
+  joints.clear();
+  
+  // Construct circles at all the vertices from the mesh.
+  for (int i = 0; i < meshPoints - 1; i++) {
+    auto circle = std::make_shared<ofxBox2dCircle>();
+    circle -> setPhysics(0.5, 0.5, 0.5);
+    circle -> setup(box2d.getWorld(), vertices[i].x, vertices[i].y, circleRadius);
+    circles.push_back(circle);
+  }
+  
+  // Connect center circle to all the circles.
+  // Start from 1st circle because the 0th circle is connected other vertices.
+  // We go 1 less than the mesh points because last point in the mesh is the
+  // same as the second point (after center).
+  for(auto i=1; i<circles.size(); i++) {
+    auto joint = std::make_shared<ofxBox2dJoint>();
+    joint -> setup(box2d.getWorld(), circles[0] -> body, circles[i] -> body, 4.f, 1.f);
+    joint->setLength(faceMeshRadius);
+    joints.push_back(joint);
+  }
+  
+  // Connect joints with each other.
+  // We go 1 less than the mesh points because last point in the mesh is the
+  // same as the second point (after center).
+  for(auto i=1; i<circles.size(); i++) {
+    auto joint = std::make_shared<ofxBox2dJoint>();
+    
+    // At last index, make a spring back to 0.
+    int fromIdx = i; int toIdx = i+1;
+    if (i == circles.size() - 1) {
+      toIdx = 1;
+    }
+    
+    joint -> setup(box2d.getWorld(), circles[fromIdx] -> body, circles[toIdx] -> body, 1.f, 1.f);
+    joint->setLength(jointLength);
+    joints.push_back(joint);
+  }
 }
 
 void Face::updateFaceMeshPlane() {
-
-}
-
-void Face::showMesh() {
-
-}
-
-void Face::showMeshWireframe() {
+  // 0th vertex is the center of the mesh.
+  // Vertices 1 -> circles.(size-1) are other vertices.
+  for (int i = 0; i < meshPoints; i++) {
+    // Get ith circle's position.
+    glm::vec2 pos;
+    
+    if (i == meshPoints - 1) {
+      pos = circles[1] -> getPosition();
+    } else {
+      pos = circles[i] -> getPosition();
+    }
   
+    // Update ith mesh vertex's position.
+    auto vertex = faceMesh.getVertices()[i];
+    vertex.x = pos.x;
+    vertex.y = pos.y;
+    faceMesh.setVertex(i, vertex);
+  }
 }
 
-void Face::showSoftBody() {
+void Face::draw(ofVideoGrabber &grabber, bool showMesh, bool showTexture, bool showSoftBody) {
+  // Show just the mesh with
+  if (showMesh) {
+    if (faceMesh.getVertices().size() > 0) {
+        ofPushStyle();
+          ofSetColor(ofColor::white);
+          ofPushMatrix();
+            //ofTranslate(ofGetWidth()/2 - rect.getWidth()/2, ofGetHeight()/2 - rect.getHeight()/2);
+            grabber.getTexture().bind();
+              if (showTexture) {
+                faceMesh.draw();
+              } else {
+                faceMesh.drawWireframe();
+              }
+            grabber.getTexture().unbind();
+          ofPopMatrix();
+        ofPopStyle();
+    }
+  }
+  
+  // Show springs and joints.
+  if (showSoftBody) {
+    for(auto c: circles) {
+      ofNoFill();
+      ofSetColor(ofColor::red);
+      c->draw();
+    }
 
+    for(auto j: joints) {
+      ofSetColor(ofColor::green);
+      j->draw();
+    }
+  }
 }
 
-void Face::showTexture() {
-
-}

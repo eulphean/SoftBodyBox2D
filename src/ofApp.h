@@ -18,21 +18,7 @@ class ofApp : public ofBaseApp{
     void keyPressed(int key);
   
     // Helpers
-    void setupMeshPlane();
-    void setupBox2dSprings();
-    void updateMeshPlane();
-    void trackMeshCentroidForWekinator(); 
-  
-    // Constants
-    const int meshRadius = 100;
-    const int meshPoints = 20;
-    const int circleRadius = 18;
-    const int textureLength = 400;
-    const int jointLength = 5;
-  
-    // Mesh and texture.
-    ofImage image;
-    ofMesh mesh;
+    void trackMeshCentroidForWekinator();
   
     // Commands. 
     bool showMesh;
@@ -52,14 +38,8 @@ class ofApp : public ofBaseApp{
     ofxFaceTracker2 tracker;
     ofVideoGrabber grabber;
     std::vector<ofRectangle> boundingBoxes;
-    std::vector<ofMesh> faceMeshes;
-    ofMesh faceMesh; 
 
     void showBoundingRect();
-    void createFaceMesh();
-    void createRectFaceMesh();
-    void updateFaceMeshPlane();
-    void createFaceBox2DSprings();
   
     bool showGrabber = false;
     bool showDebugFace = false;
