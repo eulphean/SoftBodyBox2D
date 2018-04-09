@@ -10,7 +10,7 @@ void ofApp::setup(){
   
     // Setup Box2d
     box2d.init();
-    box2d.setGravity(0.3f, 0.3f);
+    box2d.setGravity(-0.3f, 0.3f);
     box2d.createBounds(ofRectangle(0, 0, ofGetWidth(), ofGetHeight()));
     box2d.setFPS(60.0);
     box2d.registerGrabbing(); // Enable grabbing the circles.
@@ -44,10 +44,10 @@ void ofApp::update(){
     // Get the bounding boxes.
     if (tracker.size() > 0){
       auto& instances = tracker.getInstances();
-      auto& instance = instances[0];
-      auto rect = instance.getBoundingBox();
-      // Push it in the vector.
-      boundingBoxes.push_back(rect);
+      for (auto &i : instances) {
+        auto rect = i.getBoundingBox();
+        boundingBoxes.push_back(rect);
+      }
     }
     
     // Go through all the bounding boxes currently active and

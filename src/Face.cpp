@@ -21,8 +21,9 @@ void Face::createFaceMesh(ofRectangle r) {
 
   faceMesh.setMode(OF_PRIMITIVE_TRIANGLE_FAN);
 
-  // Center vertex for the triangle fan. // random
-  glm::vec3 center = glm::vec3(ofGetWidth()/2, ofGetHeight()/2, 0);
+  // Start creating a face randomly on the screen. 
+  //glm::vec3 center = glm::vec3(ofGetWidth()/2, ofGetHeight()/2, 0);
+  glm::vec3 center = glm::vec3(ofRandom(faceMeshRadius, ofGetWidth() - faceMeshRadius), ofRandom(faceMeshRadius, ofGetHeight() - faceMeshRadius), 0);
   faceMesh.addVertex(center);
 
   // Center vertex of the texture (ie. the center of the bounding rectangle for the texture)
