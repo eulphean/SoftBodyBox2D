@@ -71,6 +71,11 @@ void ofApp::update(){
     // Go through each face and update it based on its movement in the
     // environment.
     for (auto &face : faces) {
+      if (boundingBoxes.size() > 0) {
+        for (auto &r : boundingBoxes) {
+          // Get the texture and update it. 
+        }
+      }
       face.updateFaceMeshPlane();
     }
   }
