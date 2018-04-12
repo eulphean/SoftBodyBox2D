@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<group>
+	<Radius>8.72</Radius>
+	<JointLength>17.5</JointLength>
+	<Density>0.5</Density>
+	<Bounce>0.5</Bounce>
+	<Friction>0.5</Friction>
+	<CenterJointFrequency>1</CenterJointFrequency>
+	<CenterJointDamping>5</CenterJointDamping>
+	<OuterJointFrequency>1</OuterJointFrequency>
+	<OuterJointDamping>5</OuterJointDamping>
+</group>

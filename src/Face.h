@@ -13,15 +13,18 @@ class Face {
     ofMesh faceMesh;
   
     // Constants
-    const int meshPoints = 20;
-    const int circleRadius = 18;
-    const int jointLength = 5;
-    float faceMeshRadius;
+    int meshPoints; 
+    const int circleRadius = 18; // These should be GUI sliders to adjust the shape.
+    const int jointLength = 5; // There should be a single shape. We add more control points
+    float faceMeshRadius; // as one comes in the shape. The size increases. We apply a GAN on that shape.
+    float faceCircumference;
   
   public:
-    void createFaceMesh(ofRectangle boundingRect);
+    void createFaceMesh(ofRectangle boundingRect, float circleRadius, float jointLength);
+    void createFaceBox2DSprings(ofxBox2d &box2d, float circleRadius, float jointLength, ofPoint circlePhysics, ofPoint centerJointPhysics, ofPoint outerJointPhysics);
+    void updateFaceMeshVertices();
+    void updateFaceMeshTexture();
     void updateFaceMeshPlane();
-    void createFaceBox2DSprings(ofxBox2d &box2d);
     void draw(ofVideoGrabber &grabber, bool showMesh, bool showTexture, bool showSoftBody);
 };
 

@@ -8,6 +8,7 @@
 #include "Osc.h"
 #include "ofxFaceTracker2.h"
 #include "Face.h"
+#include "ofxGui.h"
 
 class ofApp : public ofBaseApp{
 
@@ -16,6 +17,7 @@ class ofApp : public ofBaseApp{
 		void update();
 		void draw();
     void keyPressed(int key);
+    void exit();
   
     // Helpers
     void trackMeshCentroidForWekinator();
@@ -47,5 +49,17 @@ class ofApp : public ofBaseApp{
     int faceMeshRadius = -1;
   
     // Face properties
-    std::vector<Face> faces; 
+    std::vector<Face> faces;
+  
+    // GUI sliders.
+    ofxPanel gui;
+    ofxFloatSlider softCircleRadius;
+    ofxFloatSlider softJointLength;
+    ofxFloatSlider density;
+    ofxFloatSlider bounce;
+    ofxFloatSlider friction;
+    ofxFloatSlider centerJointFrequency;
+    ofxFloatSlider centerJointDamping;
+    ofxFloatSlider outerJointFrequency;
+    ofxFloatSlider outerJointDamping;
 };

@@ -3,7 +3,8 @@
 
 #include "Face.h"
 
-void Face::createFaceMesh(ofRectangle r) {
+// Send new radius. 
+void Face::createFaceMesh(ofRectangle r, float circleRadius, float jointLength) {
   // Clear the mesh.
   faceMesh.clear();
 
@@ -31,6 +32,14 @@ void Face::createFaceMesh(ofRectangle r) {
 
   // Ratio between the texture and the circular mesh.
   float sizeRatio = faceArea/(PI * faceMeshRadius * faceMeshRadius);
+  
+  // Calculate # of meshPoints and set the variable to that.
+  faceCircumference = 2 * PI * faceMeshRadius; // circumference
+  float totalJointLength = faceCircumference/jointLength; // jointLength is the percent.
+  meshPoints = (faceCircumference - totalJointLength) / (circleRadius * 2);  // Total number of mesh points.
+  
+  // Print the mesh points
+  std::cout << "FaceRadius, FaceCircumference, TotalJointLength, MeshPoints: " << faceMeshRadius << ", " << faceCircumference << ", " << totalJointLength << ", " << meshPoints << endl;
 
   // Add vertices around the center to form a circle.
   for(int i = 1; i < meshPoints; i++){
@@ -46,17 +55,20 @@ void Face::createFaceMesh(ofRectangle r) {
   }
 }
 
-void Face::createFaceBox2DSprings(ofxBox2d &box2d) {
+void Face::createFaceBox2DSprings(ofxBox2d &box2d, float circleRadius, float jointLength, ofPoint physics, ofPoint centerJointPhysics, ofPoint outerJointPhysics) {
   auto vertices = faceMesh.getVertices();
   
   // Clear them to make them again.
   circles.clear();
   joints.clear();
   
+  // We must have the latest value of meshPoints right now.
+  // We want to make sure we create a mesh before creating Box2D springs.
+  
   // Construct circles at all the vertices from the mesh.
   for (int i = 0; i < meshPoints - 1; i++) {
     auto circle = std::make_shared<ofxBox2dCircle>();
-    circle -> setPhysics(0.5, 0.5, 0.5);
+    circle -> setPhysics(physics.x, physics.y, physics.z); // bounce, density, friction
     circle -> setup(box2d.getWorld(), vertices[i].x, vertices[i].y, circleRadius);
     circles.push_back(circle);
   }
@@ -67,7 +79,7 @@ void Face::createFaceBox2DSprings(ofxBox2d &box2d) {
   // same as the second point (after center).
   for(auto i=1; i<circles.size(); i++) {
     auto joint = std::make_shared<ofxBox2dJoint>();
-    joint -> setup(box2d.getWorld(), circles[0] -> body, circles[i] -> body, 4.f, 1.f);
+    joint -> setup(box2d.getWorld(), circles[0] -> body, circles[i] -> body, centerJointPhysics.x, centerJointPhysics.x);
     joint->setLength(faceMeshRadius);
     joints.push_back(joint);
   }
@@ -75,17 +87,20 @@ void Face::createFaceBox2DSprings(ofxBox2d &box2d) {
   // Connect joints with each other.
   // We go 1 less than the mesh points because last point in the mesh is the
   // same as the second point (after center).
+  float totalJointLength = faceCircumference / jointLength;
+  float length = totalJointLength / meshPoints;
+  cout << "Length of each joint: " << length << endl;
   for(auto i=1; i<circles.size(); i++) {
     auto joint = std::make_shared<ofxBox2dJoint>();
-    
+
     // At last index, make a spring back to 0.
     int fromIdx = i; int toIdx = i+1;
     if (i == circles.size() - 1) {
       toIdx = 1;
     }
-    
-    joint -> setup(box2d.getWorld(), circles[fromIdx] -> body, circles[toIdx] -> body, 1.f, 1.f);
-    joint->setLength(jointLength);
+
+    joint -> setup(box2d.getWorld(), circles[fromIdx] -> body, circles[toIdx] -> body, outerJointPhysics.x, outerJointPhysics.y);
+    joint->setLength(length);
     joints.push_back(joint);
   }
 }

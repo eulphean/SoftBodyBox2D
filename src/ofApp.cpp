@@ -5,7 +5,6 @@
 
 //--------------------------------------------------------------
 void ofApp::setup(){
-    ofEnableDepthTest();
     ofBackground(0);
   
     // Setup Box2d
@@ -23,6 +22,20 @@ void ofApp::setup(){
     // OSC handler
     oscHandler.setup();
   
+    // Setup GUI.
+    gui.setup();
+    gui.add(softCircleRadius.setup("Radius", 18, 2, 50));
+    gui.add(softJointLength.setup("JointLength", 2, 0, 20));
+    gui.add(density.setup("Density", 0.5, 0, 1));
+    gui.add(bounce.setup("Bounce", 0.5, 0, 1));
+    gui.add(friction.setup("Friction", 0.5, 0, 1));
+    gui.add(centerJointFrequency.setup("CenterJointFrequency", 4.f, 0.f, 20.f ));
+    gui.add(centerJointDamping.setup("CenterJointDamping", 1.f, 0.f, 5.f));
+    gui.add(outerJointFrequency.setup("OuterJointFrequency", 1.f, 0.f, 20.f));
+    gui.add(outerJointDamping.setup("OuterJointDamping", 1.f, 0.f, 5.f));
+  
+    gui.loadFromFile("SoftBodyBox2D.xml");
+    
     // Face tracker
     grabber.setup(ofGetWidth(), ofGetHeight());
     tracker.setup();
@@ -56,12 +69,17 @@ void ofApp::update(){
     // these faces by emptying the current set of faces.
     if (boundingBoxes.size() > 0) {
       if (createMeshAndSprings) {
+        // Vector of density, bounce, and friction.
+        ofPoint physics(density, bounce, friction);
+        ofPoint centerJointPhysics(centerJointFrequency, centerJointDamping);
+        ofPoint outerJointPhysics(outerJointFrequency, outerJointDamping);
+        
         // Clear existing faces.
         faces.clear();
         for (auto &r : boundingBoxes) {
           Face face;
-          face.createFaceMesh(r);
-          face.createFaceBox2DSprings(box2d);
+          face.createFaceMesh(r, softCircleRadius, softJointLength); // Create a face mesh.
+          face.createFaceBox2DSprings(box2d, softCircleRadius, softJointLength, physics, centerJointPhysics, outerJointPhysics); // Create the soft body. Pass all GUI physics parameters.
           faces.push_back(face);
         }
         createMeshAndSprings = false;
@@ -95,7 +113,7 @@ void ofApp::update(){
 
 //--------------------------------------------------------------
 void ofApp::draw(){
-  // showBoundingRect();
+  //showBoundingRect();
   
   if (showDebugFace) {
     tracker.drawDebug();
@@ -109,6 +127,8 @@ void ofApp::draw(){
   if (showGrabber) {
     grabber.draw(0, 0);
   }
+  
+  gui.draw(); // Draw the GUI.
 }
 
 void ofApp::showBoundingRect() {
@@ -162,6 +182,10 @@ void ofApp::keyPressed(int key) {
 void ofApp::trackMeshCentroidForWekinator() {
   //glm::vec2 centroid = mesh.getCentroid();
   //oscHandler.sendPositionToWekinator(centroid);
+}
+
+void ofApp::exit() {
+  gui.saveToFile("SoftBodyBox2D.xml");
 }
 
 //void ofApp::setupMeshPlane() {
